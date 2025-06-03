@@ -51,10 +51,12 @@ const STYLE_ID = '01970420-d684-7667-a459-65bfada4ce28';
 
 /* ── robust Cusdis renderer, now includes renderTo() ── */
 function cusdisRender(props, attempt = 0){
-  if (window.CUSDIS?.render)        return window.CUSDIS.render(props);
+  const el = props.element;          // convenience
+
+  if (window.CUSDIS?.render)        return window.CUSDIS.render(el);
   if (window.CUSDIS?.mount)         return window.CUSDIS.mount(props);
   if (window.CUSDIS?.renderThread)  return window.CUSDIS.renderThread(props);
-  if (window.CUSDIS?.renderTo)      return window.CUSDIS.renderTo(props.element);
+  if (window.CUSDIS?.renderTo)      return window.CUSDIS.renderTo(el);
 
   if (attempt < 5) setTimeout(()=>cusdisRender(props, attempt+1), 250);
 }
@@ -91,33 +93,45 @@ const link = new Autolinker({truncate:{length:30,location:'smart'}});
 const appId = '9c22f7ce-f8ce-41ba-80b9-7443ae182490';
 
 function popupHTML(f){
-  const p=f.properties;
-  const img=p.ImageURL && p.ImageURL!=='y'
-           ? `<div class="popup-img"><img src="${link.link(p.ImageURL)}"></div>` : '';
+  const p  = f.properties;
+  const pid = (p.Title || p.location || Date.now()).toString().replace(/\s+/g,'_');
+  const img = p.ImageURL && p.ImageURL!=='y'
+            ? `<div class="popup-img"><img src="${link.link(p.ImageURL)}"></div>` : '';
+
   return `<div class="popup-inner">
-            ${p.Title    ? `<div class="popup-title">${link.link(p.Title)}</div>` : ''}
+            ${p.Title ? `<div class="popup-title">${link.link(p.Title)}</div>` : ''}
             ${img}
             ${p.location ? `<div class="popup-place">${link.link(p.location)}</div>` : ''}
-            <div id="cusdis_thread"></div>
+            <div id="cusdis_thread"
+                 data-host="https://cusdis.com"
+                 data-app-id="${appId}"
+                 data-page-id="${pid}"
+                 data-page-url="${location.href}#${pid}"
+                 data-page-title="${p.Title || 'World Map'}"></div>
           </div>`;
 }
+
 
 L.geoJson(json_WorldMapSheet1_2,{
   pointToLayer:(f,ll)=>L.marker(ll,{icon:pinIcon}),
   onEachFeature:(f,l)=>{
     l.bindPopup(popupHTML(f),{maxHeight:800});
-    l.on('popupopen',()=>{
-      const el=l.getPopup().getElement().querySelector('#cusdis_thread');
-      const pid=(f.properties.Title||f.properties.location||Date.now()).toString().replace(/\s+/g,'_');
+    l.on('popupopen', () => {
+      const el  = l.getPopup().getElement().querySelector('#cusdis_thread');
+      if (!el) return;
+
+      const pid = (f.properties.Title || f.properties.location || Date.now())
+                  .toString().replace(/\s+/g,'_');
+
       cusdisRender({
-        host:'https://cusdis.com',
-        appId,
-        element:el,
-        pageId:pid,
-        pageTitle:f.properties.Title||'World Map',
-        pageUrl:location.href+'#'+pid
+        element : el,
+        host    : 'https://cusdis.com',
+        appId   : appId,
+        pageId  : pid,
+        pageUrl : location.href + '#' + pid,
+        pageTitle : f.properties.Title || 'World Map'   // ← fixed
       });
-    });
+    }); 
   }
 }).addTo(map);
 </script>
