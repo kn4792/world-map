@@ -49,14 +49,16 @@ html,body,#map{width:100%;height:100%;margin:0}
 const MT_KEY   = 'J6aDtSRgul4B0mvpAhyQ';
 const STYLE_ID = '01970420-d684-7667-a459-65bfada4ce28';
 
-/* ========== helper: call whatever Cusdis API exists ============ */
+/* ── robust Cusdis renderer, now includes renderTo() ── */
 function cusdisRender(props, attempt = 0){
   if (window.CUSDIS?.render)        return window.CUSDIS.render(props);
   if (window.CUSDIS?.mount)         return window.CUSDIS.mount(props);
   if (window.CUSDIS?.renderThread)  return window.CUSDIS.renderThread(props);
+  if (window.CUSDIS?.renderTo)      return window.CUSDIS.renderTo(props.element);
 
   if (attempt < 5) setTimeout(()=>cusdisRender(props, attempt+1), 250);
 }
+
 
 /* ========== create map & basemap =============================== */
 const map = L.map('map',{zoomControl:false})
