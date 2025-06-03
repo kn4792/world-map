@@ -5,187 +5,119 @@
 <meta name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no,width=device-width">
 
-<!-- ─── core Leaflet assets ─────────────────────────────────────── -->
+<!-- Leaflet + MapTiler + qgis2web assets (unchanged) -->
 <link rel="stylesheet" href="css/leaflet.css">
 <script src="js/leaflet.js"></script>
-
-<!-- ─── MapTiler SDK for vector tiles + Leaflet bridge ──────────── -->
 <link  href="https://cdn.maptiler.com/maptiler-sdk-js/v3.2.0/maptiler-sdk.css" rel="stylesheet">
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.2.0/maptiler-sdk.umd.min.js"></script>
 <script src="https://cdn.maptiler.com/leaflet-maptilersdk/v4.0.2/leaflet-maptilersdk.umd.min.js"></script>
-
-<!-- ─── extra libs from qgis2web we still use ───────────────────── -->
 <link rel="stylesheet" href="css/qgis2web.css">
 <link rel="stylesheet" href="css/fontawesome-all.min.css">
 <script src="js/qgis2web_expressions.js"></script>
 <script src="js/leaflet-hash.js"></script>
 <script src="js/Autolinker.min.js"></script>
 
-<!-- ── Cusdis SDK loads early (defer) ──────────────────────────── -->
+<!-- Cusdis SDK (loads once, defer) -->
 <script defer src="https://cusdis.com/js/cusdis.es.js"></script>
 
 <style>
 html,body,#map{width:100%;height:100%;margin:0}
-#map{background:#e6ccff;}          /* seen while tiles load */
+#map{background:#e6ccff;}
 
-/* ── Popup card theme ─────────────────────────────────────────── */
-.leaflet-popup-content-wrapper{
-  background:#f6ead4;border-radius:12px;padding:0;
-}
+.leaflet-popup-content-wrapper{background:#f6ead4;border-radius:12px;padding:0}
 .leaflet-popup-tip{display:none}
 
-.popup-inner{
-  font-size:14px;line-height:1.4;padding:12px;max-width:560px
-}
-.popup-title {font-size:22px;font-weight:700;text-align:center;margin:0 0 6px}
+.popup-inner{font-size:14px;line-height:1.4;padding:12px;max-width:560px}
+.popup-title{font-size:22px;font-weight:700;text-align:center;margin:0 0 6px}
+.popup-img img{width:100%;border-radius:6px;margin-bottom:8px;display:block}
+.popup-place{font-style:italic;text-align:right;margin-top:6px;margin-bottom:0}
 
-.popup-img img{
-  width:100%;border-radius:6px;margin-bottom:8px;display:block
-}
-
-.popup-place {
-  font-style:italic;
-  text-align:right;
-  margin-top:6px;
-  margin-bottom:0
-}
-
-
-/* guarantee comment box is visible */
-#cusdis_thread{
-  width:100%;
-  min-height:150px;
-  overflow-y:auto;
-}
-
-.leaflet-popup-close-button{display:none !important} /* no close button, use ESC key */
-[id^="cusdis_thread_"]{height:150px;overflow-y:auto;margin-top:6px}
+#cusdis_thread{width:100%;min-height:150px;overflow-y:auto}
+.leaflet-popup-close-button{display:none!important}
 </style>
 
 <title>World Map + Letter Island</title>
-
-
 </head>
 <body>
 <div id="map"></div>
 
-<!-- ─── data exported by qgis2web ───────────────────────────────── -->
 <script src="data/letter_island_1.js"></script>
 <script src="data/WorldMapSheet1_2.js"></script>
 
 <script>
-/* ============ CONFIGURE YOUR MAPTILER INFO HERE ================== */
-const MT_KEY   = 'J6aDtSRgul4B0mvpAhyQ';          //  ← your whitelisted key
-const STYLE_ID = '01970420-d684-7667-a459-65bfada4ce28';  //  ← your style ID
-/* ================================================================= */
+/* ========== MapTiler config ==================================== */
+const MT_KEY   = 'J6aDtSRgul4B0mvpAhyQ';
+const STYLE_ID = '01970420-d684-7667-a459-65bfada4ce28';
 
-
-/* ── helper: robust Cusdis renderer ───────────────────────────── */
+/* ========== helper: call whatever Cusdis API exists ============ */
 function cusdisRender(props, attempt = 0){
-  if (window.CUSDIS?.renderThread) {
-    console.log('Cusdis → renderThread'); return window.CUSDIS.renderThread(props);
-  }
-  if (window.CUSDIS?.mount) {
-    console.log('Cusdis → mount');        return window.CUSDIS.mount(props);
-  }
-  if (window.CUSDIS?.render) {
-    console.log('Cusdis → render');       return window.CUSDIS.render(props);
-  }
-  if (attempt < 5) {                      // wait up to ~1.5 s
-    return setTimeout(()=>cusdisRender(props, attempt+1), 300);
-  }
-  console.warn('Cusdis SDK loaded but no render function found');
+  if (window.CUSDIS?.render)        return window.CUSDIS.render(props);
+  if (window.CUSDIS?.mount)         return window.CUSDIS.mount(props);
+  if (window.CUSDIS?.renderThread)  return window.CUSDIS.renderThread(props);
+
+  if (attempt < 5) setTimeout(()=>cusdisRender(props, attempt+1), 250);
 }
 
-
-/* 1 ── create map & basemap ─────────────────────────────────────── */
-const map = L.map('map', { zoomControl:false })
+/* ========== create map & basemap =============================== */
+const map = L.map('map',{zoomControl:false})
              .fitBounds([[-32.55,-174.5],[155.0,206.9]]);
 L.control.zoom({position:'topleft'}).addTo(map);
-new L.Hash(map);     // shareable URL hash
+new L.Hash(map);
 
-L.maptiler
-  .maptilerLayer({
-      apiKey : MT_KEY,
-      style  : `https://api.maptiler.com/maps/${STYLE_ID}/style.json?key=${MT_KEY}`
-  })
-  .addTo(map);
+L.maptiler.maptilerLayer({
+  apiKey:MT_KEY,
+  style:`https://api.maptiler.com/maps/${STYLE_ID}/style.json?key=${MT_KEY}`
+}).addTo(map);
 
-/* 2 ── polygon layer: Letter Island ─────────────────────────────── */
-function styleIsland(){
-  return {
-    color:'#af6cc6',
-    weight:1,
-    fillColor:'#e8caff',
-    fillOpacity:1,
-    interactive:false
-  };
-}
+/* ========== island polygon layer =============================== */
 L.geoJson(json_letter_island_1,{
-  style:styleIsland,
+  style:()=>({color:'#af6cc6',weight:1,fillColor:'#e8caff',fillOpacity:1,interactive:false}),
   onEachFeature:(f,l)=>{
-      const id = f.properties.Island || f.properties.id || 'Island';
-      l.bindPopup(`<div class="popup-inner">
-                     <div class="popup-title">${id}</div>
-                   </div>`);
+    l.bindPopup(`<div class="popup-inner"><div class="popup-title">${f.properties.Island}</div></div>`);
   }
 }).addTo(map);
 
-/* 3 ── point layer: memories & images ───────────────────────────── */
+/* ========== point layer with pop-ups =========================== */
 const pinIcon = L.icon({
-  iconUrl    :'markers/WorldMapSheet1_2.svg',
-  iconSize   :[40,40],
-  iconAnchor :[14.82,29.64],
+  iconUrl:'markers/WorldMapSheet1_2.svg',
+  iconSize:[40,40],
+  iconAnchor:[14.82,29.64],
   popupAnchor:[180,200]
 });
 
-const autolink = new Autolinker({truncate:{length:30,location:'smart'}});
-const cusdisId = '9c22f7ce-f8ce-41ba-80b9-7443ae182490';
+const link = new Autolinker({truncate:{length:30,location:'smart'}});
+const appId = '9c22f7ce-f8ce-41ba-80b9-7443ae182490';
 
 function popupHTML(f){
-  const p  = f.properties;
-  const id = (p.Title||p.location||Date.now()).toString().replace(/\s+/g,'_');
-  const img = p.ImageURL && p.ImageURL!=='y'
-            ? `<div class="popup-img"><img src="${autolink.link(p.ImageURL)}"></div>` : '';
+  const p=f.properties;
+  const img=p.ImageURL && p.ImageURL!=='y'
+           ? `<div class="popup-img"><img src="${link.link(p.ImageURL)}"></div>` : '';
   return `<div class="popup-inner">
-            ${p.Title    ? `<div class="popup-title">${autolink.link(p.Title)}</div>` : ''}
+            ${p.Title    ? `<div class="popup-title">${link.link(p.Title)}</div>` : ''}
             ${img}
-            ${p.location ? `<div class="popup-place">${autolink.link(p.location)}</div>` : ''}
-            <div id="cusdis_thread"
-                 data-host="https://cusdis.com"
-                 data-app-id="${cusdisId}"
-                 data-page-id="${id}"
-                 data-page-url="${location.href}#${id}"
-                 data-page-title="${p.Title||'World Map'}"></div>
+            ${p.location ? `<div class="popup-place">${link.link(p.location)}</div>` : ''}
+            <div id="cusdis_thread"></div>
           </div>`;
 }
-
-
-
 
 L.geoJson(json_WorldMapSheet1_2,{
   pointToLayer:(f,ll)=>L.marker(ll,{icon:pinIcon}),
   onEachFeature:(f,l)=>{
-      l.bindPopup(popupHTML(f),{maxHeight:800});
-      l.on('popupopen',()=>{
-        const el=l.getPopup().getElement().querySelector('#cusdis_thread');
-        if(el){
-          const p=f.properties;
-          const pid=(p.Title||p.location||Date.now()).toString().replace(/\s+/g,'_');
-          cusdisRender({
-            host:'https://cusdis.com',
-            appId:cusdisId,
-            element:el,
-            pageId:pid,
-            pageTitle:p.Title||'World Map',
-            pageUrl:location.href+'#'+pid
-          });
-        }
+    l.bindPopup(popupHTML(f),{maxHeight:800});
+    l.on('popupopen',()=>{
+      const el=l.getPopup().getElement().querySelector('#cusdis_thread');
+      const pid=(f.properties.Title||f.properties.location||Date.now()).toString().replace(/\s+/g,'_');
+      cusdisRender({
+        host:'https://cusdis.com',
+        appId,
+        element:el,
+        pageId:pid,
+        pageTitle:f.properties.Title||'World Map',
+        pageUrl:location.href+'#'+pid
       });
+    });
   }
 }).addTo(map);
-
-
 </script>
 </body>
 </html>
