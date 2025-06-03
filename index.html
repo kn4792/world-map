@@ -133,25 +133,31 @@ function popupHTML(f){
 }
 
 
+/* ── helper: call whichever API the SDK exposes ─────────────── */
+function cusdisRender(props){
+  if (window.CUSDIS?.renderThread) return window.CUSDIS.renderThread(props);
+  if (window.CUSDIS?.mount)        return window.CUSDIS.mount(props);
+  if (window.CUSDIS?.render)       return window.CUSDIS.render(props);
+}
+
 L.geoJson(json_WorldMapSheet1_2,{
   pointToLayer:(f,ll)=>L.marker(ll,{icon:pinIcon}),
   onEachFeature:(f,l)=>{
       l.bindPopup(popupHTML(f),{maxHeight:800});
       l.on('popupopen', () => {
         const el = l.getPopup().getElement().querySelector('#cusdis_thread');
-        if (window.CUSDIS && el) {
+        if (el) {
           const p   = f.properties;
           const pid = (p.Title || p.location || Date.now()).toString().replace(/\s+/g,'_');
 
-          window.CUSDIS.mount({
-            host     : 'https://cusdis.com',
-            appId    : cusdisId,
-            element  : el,            // explicit mount point
-            pageId   : pid,
-            pageTitle: p.Title || 'World Map',
-            pageUrl  : location.href + '#' + pid
+          cusdisRender({
+            host:'https://cusdis.com',
+            appId:cusdisId,
+            element:el,            // explicit mount point
+            pageId:pid,
+            pageTitle:p.Title || 'World Map',
+            pageUrl:location.href + '#' + pid
           });
-
         }
       });
   }
