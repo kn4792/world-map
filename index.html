@@ -143,14 +143,15 @@ L.geoJson(json_WorldMapSheet1_2,{
           const p   = f.properties;
           const pid = (p.Title || p.location || Date.now()).toString().replace(/\s+/g,'_');
 
-          window.CUSDIS.renderThread({
+          window.CUSDIS.mount({
             host     : 'https://cusdis.com',
             appId    : cusdisId,
-            element  : el,           // explicit mount point
+            element  : el,            // explicit mount point
             pageId   : pid,
             pageTitle: p.Title || 'World Map',
             pageUrl  : location.href + '#' + pid
           });
+
         }
       });
   }
