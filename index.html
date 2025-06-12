@@ -24,16 +24,59 @@
 html,body,#map{width:100%;height:100%;margin:0}
 #map{background:#e6ccff;}
 
-.leaflet-popup-content-wrapper{background:#f6ead4;border-radius:12px;padding:0}
-.leaflet-popup-tip{display:none}
+/* 1 ── FIX the outer shell — the <table> Leaflet injects */
+.leaflet-popup-content-wrapper{
+  width:380px !important;          /* ✔ same width for every card            */
+  max-width:380px !important;      /*   (Leaflet sometimes shrinks otherwise)*/
+  background:#f6ead4;
+  border-radius:12px;
+  padding:0;
+}
 
-.popup-inner{font-size:14px;line-height:1.4;padding:12px;max-width:560px}
-.popup-title{font-size:22px;font-weight:700;text-align:center;margin:0 0 6px}
-.popup-img img{width:100%;border-radius:6px;margin-bottom:8px;display:block}
-.popup-place{font-style:italic;text-align:right;margin-top:6px;margin-bottom:0}
+/* 2 ── FIX the overall height and make it a flex column */
+.popup-inner{
+  display:flex;
+  flex-direction:column;
+  height:520px;                    /* ✔ uniform height                       */
+  box-sizing:border-box;           /* height includes padding                */
+  padding:14px;
+  font-size:14px;
+  line-height:1.4;
+  overflow:hidden;                 /* hide anything that still spills        */
+}
 
-#cusdis_thread{width:100%;min-height:150px;overflow-y:auto}
+/* 3 ── TITLE and LOCATION never grow */
+.popup-title,
+.popup-place{ flex:0 0 auto; }
+
+/* 4 ── IMAGE gets its own fixed area : 100% width × 260 px height */
+.popup-img{
+  flex:0 0 260px;                  /* ✔ reserve exactly 260 px of height     */
+  width:100%;
+  overflow:hidden;                 /* crop anything taller                   */
+}
+.popup-img img{
+  width:100%;
+  height:100%;
+  object-fit:cover;                /* fill the box, crop excess              */
+  border-radius:6px;
+  display:block;
+}
+
+/* 5 ── COMMENTS take the remaining space and scroll inside */
+#cusdis_thread{                    /* or  #utterances_thread after a switch  */
+  flex:1 1 auto;                   /* fills leftover height                  */
+  min-height:0;                    /* let flexbox shrink it if needed        */
+  overflow-y:auto;
+  width:100%;
+}
+
+/* 6 ── hide Leaflet’s “×” close button (already in your file) */
 .leaflet-popup-close-button{display:none!important}
+
+
+
+
 </style>
 
 <title>World Map + Letter Island</title>
