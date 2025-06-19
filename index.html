@@ -25,7 +25,8 @@ html,body,#map{width:100%;height:100%;margin:0}
 #map{background:#e6ccff;}
 
 /* 1 ── FIX the outer shell — the <table> Leaflet injects */
-.leaflet-popup-content-wrapper{
+
+  .leaflet-popup-content-wrapper{
   width:380px !important;          /* ✔ same width for every card            */
   max-width:380px !important;      /*   (Leaflet sometimes shrinks otherwise)*/
   background:#f6ead4;
@@ -33,28 +34,58 @@ html,body,#map{width:100%;height:100%;margin:0}
   padding:0;
 }
 
+.leaflet-popup-content {
+  overflow: visible !important;
+  height: auto !important;         /* ✨ override Leaflet's inline max-height */
+  max-height: none !important;     /* ✨ allow full height */
+  padding: 0 !important;           /* if you want tighter alignment */
+}
+
+
+
 /* 2 ── FIX the overall height and make it a flex column */
 .popup-inner{
   display:flex;
   flex-direction:column;
-  height:520px;                    /* ✔ uniform height                       */
+  height: auto;
+  max-height: 800px;                    /* ✔ uniform height                       */
   box-sizing:border-box;           /* height includes padding                */
   padding:14px;
   font-size:14px;
   line-height:1.4;
-  overflow:hidden;                 /* hide anything that still spills        */
+  overflow-y: auto;                 /* hide anything that still spills        */
 }
 
 /* 3 ── TITLE and LOCATION never grow */
-.popup-title,
-.popup-place{ flex:0 0 auto; }
+/***** TITLE *****************************************************/
+.popup-title{
+  flex:0 0 auto;
+  text-align:left;          /* ⬅︎ keep on the left                 */
+  margin:0 0 6px 0;
+  font-size:19px;           /* ⬅︎ bigger text                      */
+  font-weight:700;
+  padding-left:8px;        /* optional: indent from card edge     */
+}
+
+/***** LOCATION **************************************************/
+.popup-place{
+  flex:0 0 auto;
+  text-align:right;         /* stays on the right                  */
+  margin:6px 0 0 0;
+  font-size:18px;           /* ⬅︎ bigger than body, smaller than title */
+  font-style:italic;
+  padding-right:8px;       /* little inset from the edge          */
+  margin-bottom:14px;    /* ← new: pushes the comment box down */
+}
+
 
 /* 4 ── IMAGE gets its own fixed area : 100% width × 260 px height */
 .popup-img{
-  flex:0 0 260px;                  /* ✔ reserve exactly 260 px of height     */
+  flex:0 0 260px;                  /* ✔ reserve exactly 380 px of height     */
   width:100%;
   overflow:hidden;                 /* crop anything taller                   */
 }
+
 .popup-img img{
   width:100%;
   height:100%;
@@ -69,7 +100,10 @@ html,body,#map{width:100%;height:100%;margin:0}
   min-height:0;                    /* let flexbox shrink it if needed        */
   overflow-y:auto;
   width:100%;
+  max-height: 180px;
 }
+
+
 
 /* 6 ── hide Leaflet’s “×” close button (already in your file) */
 .leaflet-popup-close-button{display:none!important}
@@ -158,7 +192,7 @@ function popupHTML(f){
 L.geoJson(json_WorldMapSheet1_2,{
   pointToLayer:(f,ll)=>L.marker(ll,{icon:pinIcon}),
   onEachFeature:(f,l)=>{
-    l.bindPopup(popupHTML(f),{maxHeight:800});
+    l.bindPopup(popupHTML(f),{maxHeight:1000, maxWidth:380});
     l.on('popupopen', () => {
       const el  = l.getPopup().getElement().querySelector('#cusdis_thread');
       if (!el) return;
