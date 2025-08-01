@@ -108,6 +108,23 @@ html,body,#map{width:100%;height:100%;margin:0}
 /* 6 ── hide Leaflet’s “×” close button (already in your file) */
 .leaflet-popup-close-button{display:none!important}
 
+.interaction-label {
+  position: fixed;
+  bottom: 45px;
+  left: 5px;
+  background: rgba(240, 195, 230, 0.8);
+  color: rgb(0, 0, 0);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: monospace;
+  z-index: 9999;
+}
+
+.interaction-label div {
+  margin: 2px 0;
+}
 
 
 
@@ -212,5 +229,12 @@ L.geoJson(json_WorldMapSheet1_2,{
   }
 }).addTo(map);
 </script>
+<div class="interaction-label" id="interaction-label">
+  <div>[click on a pins]</div>
+  <div>[scroll and comment]</div>
+  <div>[click back to return to homepage]</div>
+</div>
+
+
 </body>
 </html>
